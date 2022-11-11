@@ -4,8 +4,9 @@
 #include "stdio.h"
 #include "display.h"
 #include "math.h"
+#include "stdlib.h"
 
-#define DROP_ZONE (DISPLAY_HEIGHT * 3 / 4)
+#define DROP_ZONE (DISPLAY_HEIGHT / 4)
 #define GROUND DISPLAY_HEIGHT
 #define LAUNCH_SITE_BOUNDARY_1 (3 * DISPLAY_WIDTH / 8)
 #define LAUNCH_SITE_BOUNDARY_2 (5 * DISPLAY_WIDTH / 8)
@@ -14,13 +15,13 @@
 #define PLAYER_LAUNCH_SITE_2 (DISPLAY_WIDTH / 2)
 #define PLAYER_LAUNCH_SITE_3 (3 * DISPLAY_WIDTH / 4)
 
-enum missile_st {
+typedef enum  {
   initialSt,
   moveSt,
   explodeSt,
   shrinkSt,
   deadSt,
-};
+} missile_st_t;
 
 
 
@@ -38,7 +39,7 @@ void missile_init_enemy(missile_t *missile)
 {
     missile->type = MISSILE_TYPE_ENEMY; 
     missile->x_origin = rand() % DISPLAY_WIDTH;
-    missile->y_origin = rand() % DROP_ZONE;
+    missile->y_origin = 0;
     missile->x_dest = rand() % DISPLAY_WIDTH;
     missile->y_dest = GROUND;
     missile->currentState = initialSt;
@@ -51,15 +52,16 @@ void missile_init_enemy(missile_t *missile)
 void missile_init_player(missile_t *missile, uint16_t x_dest, uint16_t y_dest)
 {
     missile->type = MISSILE_TYPE_PLAYER;
+    missile->x_dest = x_dest;
+    missile->y_dest = y_dest;
     if(missile->x_dest < LAUNCH_SITE_BOUNDARY_1) 
         missile->x_origin = PLAYER_LAUNCH_SITE_1;
     else if(missile->x_dest > LAUNCH_SITE_BOUNDARY_2)
-        missile->x_origin = PLAYER_LAUNCH_SITE_2;
-    else
         missile->x_origin = PLAYER_LAUNCH_SITE_3;
+    else
+        missile->x_origin = PLAYER_LAUNCH_SITE_2;
     missile->y_origin = GROUND;
-    missile->x_dest = x_dest;
-    missile->y_dest = y_dest;
+    
     missile->currentState = initialSt;
 }
 
@@ -79,58 +81,57 @@ void missile_init_player(missile_t *missile, uint16_t x_dest, uint16_t y_dest)
 ////////// State Machine TICK Function //////////
 void missile_tick(missile_t *missile)
 {
-    switch(missile->currentState)
+    switch (missile->currentState)
     {
-        case initialSt:
-            missile->length = 0;
-            missile->explode_me = false;
-            missile->total_length = sqrt(((missile->y_dest - missile->y_origin)*(missile->y_dest - missile->y_origin)) + ((missile->x_dest - missile->x_origin)*(missile->x_dest - missile->x_origin)));
-            missile->x_current = missile->x_origin; 
-            missile->y_current = missile->y_origin; 
-            missile->impacted = false;
-            missile->currentState = moveSt;
-            break;
-
-        case moveSt:
-            
-            if(missile->length >= missile->total_length)
+    case initialSt:
+        missile->length = 0;
+        missile->explode_me = false;
+        missile->total_length = sqrt(((missile->y_dest - missile->y_origin)*(missile->y_dest - missile->y_origin)) + 
+                                        ((missile->x_dest - missile->x_origin)*(missile->x_dest - missile->x_origin)));
+        missile->x_current = missile->x_origin; 
+        missile->y_current = missile->y_origin; 
+        missile->impacted = false;
+        missile->radius = 0;
+        missile->currentState = moveSt;
+        break;
+    case moveSt:
+        if(missile->length >= missile->total_length)
             {
                 display_drawLine(missile->x_origin, missile->y_origin, missile->x_current, missile->y_current, DISPLAY_BLACK);
-                missile->currentState = deadSt;
+                if(missile->type != MISSILE_TYPE_PLAYER)
+                    missile->currentState = deadSt;
+                else
+                    missile->currentState = explodeSt;
             }
-        break;
+    break;
 
-        case explodeSt:
-        //if(missile->radius == CONFIG_EXPLOSION_MAX_RADIUS)
-            //missile->currentState = shrinkSt;
+    case explodeSt:
+        if(missile->radius >= CONFIG_EXPLOSION_MAX_RADIUS)
+        {
+            display_fillCircle(missile->x_current, missile->y_current, missile->radius, DISPLAY_BLACK);
+            missile->currentState = shrinkSt;
+        }
         break;
-
-        case shrinkSt:
-        //if(missile_is_dead(missile))
-            //missile->currentState = deadSt;
+    case shrinkSt:
+        display_fillCircle(missile->x_current, missile->y_current, missile->radius, DISPLAY_BLACK);
+        if(missile->radius <= 0)
+            missile->currentState = deadSt;
         break;
-
-        case deadSt:
-        break;
-
-        default:
+    default:
         break;
     }
-
-
-    switch(missile->currentState)
+    
+    switch (missile->currentState)
     {
-        case moveSt:
-            
-            display_drawLine(missile->x_origin, missile->y_origin, missile->x_current, missile->y_current, DISPLAY_BLACK);
+    case moveSt:
+        display_drawLine(missile->x_origin, missile->y_origin, missile->x_current, missile->y_current, DISPLAY_BLACK);
             if(missile->type == MISSILE_TYPE_PLAYER)
             {
                 missile->length += CONFIG_PLAYER_MISSILE_DISTANCE_PER_TICK;
                 missile->x_current = missile->x_origin + (missile->length / missile->total_length) * (missile->x_dest - missile->x_origin);
                 missile->y_current = missile->y_origin + (missile->length / missile->total_length) * (missile->y_dest - missile->y_origin);
                 display_drawLine(missile->x_origin, missile->y_origin, missile->x_current, missile->y_current, CONFIG_COLOR_PLAYER);
-                printf("%d\n", missile->currentState);
-                break;
+
             }
             else if(missile->type == MISSILE_TYPE_ENEMY)
             {
@@ -138,8 +139,7 @@ void missile_tick(missile_t *missile)
                 missile->x_current = missile->x_origin + (missile->length / missile->total_length) * (missile->x_dest - missile->x_origin);
                 missile->y_current = missile->y_origin + (missile->length / missile->total_length) * (missile->y_dest - missile->y_origin);
                 display_drawLine(missile->x_origin, missile->y_origin, missile->x_current, missile->y_current, CONFIG_COLOR_ENEMY);
-                printf("%d\n", missile->currentState);
-                break;
+
             }
             else
             {
@@ -147,22 +147,22 @@ void missile_tick(missile_t *missile)
                 missile->x_current = missile->x_origin + (missile->length / missile->total_length) * (missile->x_dest - missile->x_origin);
                 missile->y_current = missile->y_origin + (missile->length / missile->total_length) * (missile->y_dest - missile->y_origin);
                 display_drawLine(missile->x_origin, missile->y_origin, missile->x_current, missile->y_current, CONFIG_COLOR_PLANE);
-                break;
+
             }
-            
-            break;
-
-        case explodeSt:
-        //missile->radius++;
         break;
-
-        case shrinkSt:
-        //missile->radius--;
+    case explodeSt:
+        missile->radius++;
+        display_fillCircle(missile->x_current, missile->y_current, missile->radius, CONFIG_COLOR_PLAYER);
         break;
-
-        default:
+    case shrinkSt:
+        missile->radius--;
+        display_fillCircle(missile->x_current, missile->y_current, missile->radius, CONFIG_COLOR_PLAYER);
+        break;
+    
+    default:
         break;
     }
+            
 }
 
 // Return whether the given missile is dead.
@@ -170,6 +170,8 @@ bool missile_is_dead(missile_t *missile)
 {
     if(missile->currentState == deadSt)
         return true;
+    else
+        return false;
 }
 
 // Return whether the given missile is exploding.  This is needed when detecting
