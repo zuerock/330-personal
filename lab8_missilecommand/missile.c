@@ -14,6 +14,7 @@
 #define PLAYER_LAUNCH_SITE_1 (DISPLAY_WIDTH / 4)
 #define PLAYER_LAUNCH_SITE_2 (DISPLAY_WIDTH / 2)
 #define PLAYER_LAUNCH_SITE_3 (3 * DISPLAY_WIDTH / 4)
+#define DOUBLE 2
 
 typedef enum {
   initialSt,
@@ -127,7 +128,7 @@ void missile_tick(missile_t *missile) {
     display_drawLine(missile->x_origin, missile->y_origin, missile->x_current,
                      missile->y_current, DISPLAY_BLACK);
     if (missile->type == MISSILE_TYPE_PLAYER) {
-      missile->length += CONFIG_PLAYER_MISSILE_DISTANCE_PER_TICK;
+      missile->length += CONFIG_PLAYER_MISSILE_DISTANCE_PER_TICK * DOUBLE;
       missile->x_current =
           missile->x_origin + (missile->length / missile->total_length) *
                                   (missile->x_dest - missile->x_origin);
@@ -138,7 +139,7 @@ void missile_tick(missile_t *missile) {
                        missile->y_current, CONFIG_COLOR_PLAYER);
 
     } else if (missile->type == MISSILE_TYPE_ENEMY) {
-      missile->length += CONFIG_ENEMY_MISSILE_DISTANCE_PER_TICK;
+      missile->length += CONFIG_ENEMY_MISSILE_DISTANCE_PER_TICK * DOUBLE;
       missile->x_current =
           missile->x_origin + (missile->length / missile->total_length) *
                                   (missile->x_dest - missile->x_origin);
@@ -149,7 +150,7 @@ void missile_tick(missile_t *missile) {
                        missile->y_current, CONFIG_COLOR_ENEMY);
 
     } else {
-      missile->length += CONFIG_ENEMY_MISSILE_DISTANCE_PER_TICK;
+      missile->length += CONFIG_ENEMY_MISSILE_DISTANCE_PER_TICK * DOUBLE;
       missile->x_current =
           missile->x_origin + (missile->length / missile->total_length) *
                                   (missile->x_dest - missile->x_origin);
@@ -161,7 +162,7 @@ void missile_tick(missile_t *missile) {
     }
     break;
   case explodeSt:
-    missile->radius++;
+    missile->radius += DOUBLE;
     if(missile->type == MISSILE_TYPE_PLAYER)
       display_fillCircle(missile->x_current, missile->y_current, missile->radius, CONFIG_COLOR_PLAYER);
     else 
@@ -169,7 +170,7 @@ void missile_tick(missile_t *missile) {
 
     break;
   case shrinkSt:
-    missile->radius--;
+    missile->radius -= DOUBLE;
     if(missile->type == MISSILE_TYPE_PLAYER)
       display_fillCircle(missile->x_current, missile->y_current, missile->radius, CONFIG_COLOR_PLAYER);
     else 
