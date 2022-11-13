@@ -7,6 +7,7 @@
 #define DELTA_Y ((missiles[i].y_current - missiles[j].y_current) * (missiles[i].y_current - missiles[j].y_current))
 #define RADIUS (missiles[j].radius * missiles[j].radius)
 
+bool evenTick;
 display_point_t location;
 
 missile_t missiles[CONFIG_MAX_TOTAL_MISSILES];
@@ -16,7 +17,7 @@ missile_t *player_missiles = &(missiles[CONFIG_MAX_ENEMY_MISSILES]);
 // This function will initialize all missiles, stats, plane, etc.
 void gameControl_init()
 {
-    display_fillScreen(DISPLAY_BLACK);
+    evenTick = true;
     for (uint16_t i = 0; i < CONFIG_MAX_TOTAL_MISSILES; i++)
         missile_init_dead(&missiles[i]);
 }
@@ -26,7 +27,7 @@ void gameControl_init()
 // This function should tick the missiles, handle screen touches, collisions,
 // and updating statistics.
 void gameControl_tick()
-{   
+{
     for (uint16_t i = 0; i < CONFIG_MAX_ENEMY_MISSILES; i++){
         if (missile_is_dead(&enemy_missiles[i])) 
             missile_init_enemy(&enemy_missiles[i]);
@@ -34,25 +35,32 @@ void gameControl_tick()
     }
 
   // Check for dead player missiles and re-initialize
-    location = touchscreen_get_location();
 
     if(touchscreen_get_status() == TOUCHSCREEN_RELEASED)
     {
-        touchscreen_ack_touch();
-        
         for (uint16_t i = 0; i < CONFIG_MAX_PLAYER_MISSILES; i++)
         {
             if (missile_is_dead(&player_missiles[i])) {
+                location = touchscreen_get_location();
                 missile_init_player(&player_missiles[i], location.x, location.y);
-                touchscreen_ack_touch();
-                break;
-                
+                break;              
             }
         }
+        touchscreen_ack_touch();
     }
 
-    for (uint16_t i = 0; i < CONFIG_MAX_TOTAL_MISSILES; i++) {
+    if(evenTick == false){
+        for (uint16_t i = 1; i < CONFIG_MAX_TOTAL_MISSILES; i+=2) {
         missile_tick(&missiles[i]);
+        }
+        evenTick = true;
+    }
+    else
+    {
+        for (uint16_t i = 0; i < CONFIG_MAX_TOTAL_MISSILES; i+=2) {
+        missile_tick(&missiles[i]);
+        }
+        evenTick = false;
     }
 
 
