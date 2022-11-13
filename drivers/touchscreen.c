@@ -5,7 +5,7 @@
 #define WAITING_ST_MSG "waiting_st\n"
 #define SETTLING_ST_MSG "settling_st\n"
 #define PRESSED_ST_MSG "pressed_st\n"
-#define SECONDS_TO_TICKS 20
+#define SECONDS_TO_TICKS 500
 #define EMPTY 0
 
 enum touchscreen_st {
