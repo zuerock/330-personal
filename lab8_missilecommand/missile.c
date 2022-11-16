@@ -66,7 +66,7 @@ void missile_init_player(missile_t *missile, uint16_t x_dest, uint16_t y_dest) {
 // Initialize the missile as a plane missile.  This function takes an (x, y)
 // location of the plane which will be used as the origin.  The destination can
 // be randomly chosed along the bottom of the screen.
-/*void missile_init_plane(missile_t *missile, int16_t plane_x, int16_t plane_y)
+void missile_init_plane(missile_t *missile, int16_t plane_x, int16_t plane_y)
 {
     missile->type = MISSILE_TYPE_PLANE;
     missile->x_origin = plane_x;
@@ -74,7 +74,7 @@ void missile_init_player(missile_t *missile, uint16_t x_dest, uint16_t y_dest) {
     missile->x_dest = rand() % DISPLAY_WIDTH;
     missile->y_dest = GROUND;
     missile->currentState = initialSt;
-}*/
+}
 
 ////////// State Machine TICK Function //////////
 void missile_tick(missile_t *missile) {
@@ -82,7 +82,10 @@ void missile_tick(missile_t *missile) {
   case initialSt:
     missile->length = 0;
     missile->explode_me = false;
-    missile->total_length = sqrt(((missile->y_dest - missile->y_origin) * (missile->y_dest - missile->y_origin)) + ((missile->x_dest - missile->x_origin) * (missile->x_dest - missile->x_origin)));
+    missile->total_length = sqrt(((missile->y_dest - missile->y_origin) *
+                                  (missile->y_dest - missile->y_origin)) +
+                                 ((missile->x_dest - missile->x_origin) *
+                                  (missile->x_dest - missile->x_origin)));
     missile->x_current = missile->x_origin;
     missile->y_current = missile->y_origin;
     missile->impacted = false;
@@ -98,8 +101,7 @@ void missile_tick(missile_t *missile) {
       else
         missile->currentState = explodeSt;
     }
-    if(missile->explode_me == true)
-    {
+    if (missile->explode_me == true) {
       display_drawLine(missile->x_origin, missile->y_origin, missile->x_current,
                        missile->y_current, DISPLAY_BLACK);
       missile->currentState = explodeSt;
@@ -163,18 +165,22 @@ void missile_tick(missile_t *missile) {
     break;
   case explodeSt:
     missile->radius += DOUBLE;
-    if(missile->type == MISSILE_TYPE_PLAYER)
-      display_fillCircle(missile->x_current, missile->y_current, missile->radius, CONFIG_COLOR_PLAYER);
-    else 
-      display_fillCircle(missile->x_current, missile->y_current, missile->radius, CONFIG_COLOR_ENEMY);
+    if (missile->type == MISSILE_TYPE_PLAYER)
+      display_fillCircle(missile->x_current, missile->y_current,
+                         missile->radius, CONFIG_COLOR_PLAYER);
+    else
+      display_fillCircle(missile->x_current, missile->y_current,
+                         missile->radius, CONFIG_COLOR_ENEMY);
 
     break;
   case shrinkSt:
     missile->radius -= DOUBLE;
-    if(missile->type == MISSILE_TYPE_PLAYER)
-      display_fillCircle(missile->x_current, missile->y_current, missile->radius, CONFIG_COLOR_PLAYER);
-    else 
-      display_fillCircle(missile->x_current, missile->y_current, missile->radius, CONFIG_COLOR_ENEMY);
+    if (missile->type == MISSILE_TYPE_PLAYER)
+      display_fillCircle(missile->x_current, missile->y_current,
+                         missile->radius, CONFIG_COLOR_PLAYER);
+    else
+      display_fillCircle(missile->x_current, missile->y_current,
+                         missile->radius, CONFIG_COLOR_ENEMY);
     break;
 
   default:
@@ -193,15 +199,15 @@ bool missile_is_dead(missile_t *missile) {
 // Return whether the given missile is exploding.  This is needed when detecting
 // whether a missile hits another exploding missile.
 bool missile_is_exploding(missile_t *missile) {
-  if(missile->currentState == explodeSt || shrinkSt)
+  if (missile->currentState == explodeSt || shrinkSt)
     return true;
-  else  
+  else
     return false;
 }
 
 // Return whether the given missile is flying.
 bool missile_is_flying(missile_t *missile) {
-  if(missile->currentState == moveSt)
+  if (missile->currentState == moveSt)
     return true;
   else
     return false;
