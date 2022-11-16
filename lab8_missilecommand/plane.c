@@ -27,6 +27,7 @@ enum plane_st_t{
 static enum plane_st_t planeSt;
 
 display_point_t planeLocation;
+static missile_t *planeMissile;
 
 
 // Initialize the plane state machine
@@ -34,6 +35,7 @@ display_point_t planeLocation;
 // missile)
 void plane_init(missile_t *plane_missile)
 {
+    planeMissile = plane_missile;
     planeSt = moveSt;
     planeLocation.x = DISPLAY_WIDTH;
     planeLocation.y = DISPLAY_HEIGHT / 4;
@@ -45,14 +47,15 @@ void plane_tick()
     switch (planeSt)
     {
     case moveSt:
-        if(planeLocation.x == 0)
+        if(planeLocation.x == 0 || explode.me == true)
         {
             display_fillTriangle(X_0,Y_0,X_1,Y_1,X_2,Y_2,DISPLAY_BLACK);
             planeSt = deadSt;
         }
-        planeLocation.x--;
+        planeLocation.x -= CONFIG_PLANE_DISTANCE_PER_TICK;
         break;
-    
+    case deadSt;
+        break;
     default:
         break;
     }
@@ -62,7 +65,8 @@ void plane_tick()
     case moveSt:
         display_fillTriangle(X_0,Y_0,X_1,Y_1,X_2,Y_2,DISPLAY_WHITE);
         break;
-    
+    case deadSt:
+    break;
     default:
         break;
     }
@@ -71,7 +75,7 @@ void plane_tick()
 // Trigger the plane to explode
 void plane_explode()
 {
-
+    explode.me = true;
 }
 
 // Get the XY location of the plane
