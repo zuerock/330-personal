@@ -15,6 +15,8 @@ typedef struct{
 // Inits the hangman display, drawing the lines that form the board.
 void hangmanDisplay_init();
 
+void endScreen(int16_t guessses, int16_t timer, bool erase);
+
 void displayWords(uint32_t buttonVal, char *first, char *second, char *third, bool erase);
 
 // Performs the increment or decrement, given a touched point.
