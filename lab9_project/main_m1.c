@@ -8,7 +8,6 @@
 
 #include "config.h"
 #include "buttons.h"
-#include "gameControl.h"
 #include "words.h"
 
 #define TICK_PERIOD 50E-3
@@ -54,7 +53,7 @@ int main() {
     isr_run_count++;
 
     // Run tick functions
-    gameControl_tick();
+    words_tick();
     touchscreen_tick();
 
     // Stop after predetermined amount of ticks
