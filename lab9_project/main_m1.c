@@ -1,76 +1,71 @@
 #include <stdio.h>
 
-#include "interrupts.h"
-#include "intervalTimer.h"
-#include "gameDisplay.h"
-#include "touchscreen.h"
-#include "utils.h"
+#define MISSILE_COMMAND_PART3
 
 #include "config.h"
-#include "buttons.h"
 #include "words.h"
+#include "interrupts.h"
+#include "intervalTimer.h"
+#include "touchscreen.h"
+#include "buttons.h"
 
-#define TICK_PERIOD 50E-3
-#define TOTAL_SECONDS 90
-#define MAX_INTERRUPT_COUNT (TOTAL_SECONDS / TICK_PERIOD)
+#define RUNTIME_S 60
+#define RUNTIME_TICKS ((int)(RUNTIME_S / CONFIG_GAME_TIMER_PERIOD))
 
-volatile uint32_t interrupt_count;
-uint32_t isr_run_count;
-
-// Interrupt flag method
 volatile bool interrupt_flag;
 
-// Interrupt Service Routing to run tick functions using flag method
-static void isr();
+uint32_t isr_triggered_count;
+uint32_t isr_handled_count;
 
-int main() {
-
-  // Initialize Modules
-  touchscreen_init(CONFIG_TOUCHSCREEN_TIMER_PERIOD);
-  hangman_init();
-  buttons_init();
-
-  interrupts_init();
-  interrupts_irq_enable(INTERVAL_TIMER_0_INTERRUPT_IRQ);
-  interrupts_register(INTERVAL_TIMER_0_INTERRUPT_IRQ, isr);
-  intervalTimer_initCountDown(INTERVAL_TIMER_0, TICK_PERIOD);
-  intervalTimer_enableInterrupt(INTERVAL_TIMER_0);
-
-  interrupt_count = 0;
-  isr_run_count = 0;
-  interrupt_flag = false;
-
-  intervalTimer_start(INTERVAL_TIMER_0);
-
-  while (1) {
-    // Wait for interrupt flag
-    while (!interrupt_flag) {
-      utils_sleep();
-    }
-    interrupt_flag = false;
-
-    // Increment counter
-    isr_run_count++;
-
-    // Run tick functions
-    words_tick();
-    touchscreen_tick();
-
-    // Stop after predetermined amount of ticks
-    if (interrupt_count >= MAX_INTERRUPT_COUNT)
-      break;
-  }
-
-  // Stop interrupts and print counts
-  intervalTimer_stop(INTERVAL_TIMER_0);
-  printf("interrupt count: %d\n", interrupt_count);
-  printf("isr invocation count: %d\n", isr_run_count);
-  return 0;
+// Interrupt handler for game - use flag method so that it can be interrupted by
+// the touchscreen tick while running.
+void game_isr() {
+  intervalTimer_ackInterrupt(INTERVAL_TIMER_0);
+  interrupt_flag = true;
+  isr_triggered_count++;
 }
 
-// Interrupt routine
-static void isr() {
-  intervalTimer_ackInterrupt(INTERVAL_TIMER_0);
-  interrupt_count++;
-  interrupt_flag = true;
+// Interrupt handler for touchscreen - tick directly
+void touchscreen_isr() {
+  intervalTimer_ackInterrupt(INTERVAL_TIMER_1);
+  touchscreen_tick();
+}
+
+// Milestone 3 test application
+int main() {
+  interrupt_flag = false;
+  isr_triggered_count = 0;
+  isr_handled_count = 0;
+
+  display_init();
+  touchscreen_init(CONFIG_TOUCHSCREEN_TIMER_PERIOD);
+  words_init();
+  buttons_init();
+
+  // Initialize timer interrupts
+  interrupts_init();
+  interrupts_register(INTERVAL_TIMER_0_INTERRUPT_IRQ, game_isr);
+  interrupts_register(INTERVAL_TIMER_1_INTERRUPT_IRQ, touchscreen_isr);
+  interrupts_irq_enable(INTERVAL_TIMER_0_INTERRUPT_IRQ);
+  interrupts_irq_enable(INTERVAL_TIMER_1_INTERRUPT_IRQ);
+
+  intervalTimer_initCountDown(INTERVAL_TIMER_0, CONFIG_GAME_TIMER_PERIOD);
+  intervalTimer_initCountDown(INTERVAL_TIMER_1,
+                              CONFIG_TOUCHSCREEN_TIMER_PERIOD);
+  intervalTimer_enableInterrupt(INTERVAL_TIMER_0);
+  intervalTimer_enableInterrupt(INTERVAL_TIMER_1);
+  intervalTimer_start(INTERVAL_TIMER_0);
+  intervalTimer_start(INTERVAL_TIMER_1);
+
+  // Main game loop
+  while (isr_triggered_count < RUNTIME_TICKS) {
+    while (!interrupt_flag)
+      ;
+    interrupt_flag = false;
+    isr_handled_count++;
+
+    words_tick();
+  }
+  printf("Handled %d of %d interrupts\n", isr_handled_count,
+         isr_triggered_count);
 }

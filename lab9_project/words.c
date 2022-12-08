@@ -44,9 +44,8 @@ void checkLetter();
 void printIntructions(bool erase);
 void modifyKeyboard(bool correct);
 
-void hangman_init()
+void words_init()
 {
-  display_init();
   printIntructions(0);
   currentState = initSt;
 }
@@ -109,6 +108,8 @@ void words_tick()
     if (touchscreen_get_status() == TOUCHSCREEN_RELEASED)
     {
       point = hangmanDisplay_getLocationFromPoint(touchscreen_get_location());
+      if(point.y != 26)
+      {
       touchscreen_ack_touch();
       locationToLetter();
       checkLetter();
@@ -116,6 +117,7 @@ void words_tick()
         currentState = correctSt;
       else if(!letterExists && notUsed)
         currentState = wrongSt;
+      }
     }
     break;
   case wrongSt:

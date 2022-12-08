@@ -136,6 +136,7 @@ void drawBody(int16_t incorrect, bool erase)
 
 void printIntructions(bool erase) {
   if (!erase) {
+    display_fillScreen(DISPLAY_BLACK);
     display_setTextColor(DISPLAY_WHITE); // Make the text white.
     display_setTextSize(2);
     display_setCursor(DISPLAY_WIDTH / 8, (DISPLAY_HEIGHT / 3));

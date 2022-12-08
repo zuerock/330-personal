@@ -10,6 +10,4 @@ void words_tick();
 
 char setWord();
 
-void hangman_init();
-
 #endif
