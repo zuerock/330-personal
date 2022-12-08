@@ -4,8 +4,11 @@
 #include "stdio.h"
 
 
-#define START_SCREEN                                                           \
-  "Touch button0 to play easy\n         -or-\n press button1 to play med\n      -or-\n press button2 to play hard\n button3 to reset"
+#define LINE_ONE "Press Button1 to play with 1 word-"
+#define LINE_TWO "Press Button2 to play with 2 words-"
+#define LINE_THREE "Press Button3 to play with 3 words-"
+#define RESTART "Press Button0 to reset-"
+#define END_SCREEN_STATS "Guesses:\n\n Time:"
 
 #define TOP_LINE_Y (CONFIG_BOX_KEYBOARD_Y_0)
 #define BOT_LINE_Y (CONFIG_LINE_KEYBOARD)
@@ -28,6 +31,30 @@ void hangmanDisplay_init()
     display_drawLine(CONFIG_LENGTH_GALLOWS_POLE_X,CONFIG_LENGTH_GALLOWS_POLE_Y,CONFIG_LENGTH_GALLOWS_BEAM_X,CONFIG_LENGTH_GALLOWS_POLE_Y,CONFIG_GALLOWS_COLOR); // beam
     display_drawLine(CONFIG_LENGTH_GALLOWS_BEAM_X,CONFIG_LENGTH_GALLOWS_POLE_Y,CONFIG_LENGTH_GALLOWS_BEAM_X,CONFIG_LENGTH_GALLOWS_ROPE_Y,CONFIG_GALLOWS_COLOR); // rope
     display_drawLine(CONFIG_BOX_KEYBOARD_X_0,CONFIG_LINE_KEYBOARD,CONFIG_BOX_KEYBOARD_X_1,CONFIG_LINE_KEYBOARD,CONFIG_BOX_COLOR);
+}
+
+void endScreen(int16_t guessses, int16_t timer, bool erase)
+{
+  display_setCursor(CONFIG_END_SCREEN_X, CONFIG_END_SCREEN_Y); // The middle of the boxes.
+  if(erase)
+    display_setTextColor(CONFIG_BACKGROUND_COLOR);
+  else
+    display_setTextColor(CONFIG_COLOR_TEXT); // Make the text black.
+  display_setTextSize(CONFIG_END_SCREEN_TEXT_SIZE);  
+  display_println(RESTART);
+  display_setCursor(X_TEXT, CONFIG_END_SCREEN_Y); // The middle of the boxes.
+  if(erase)
+    display_setTextColor(CONFIG_BACKGROUND_COLOR);
+  else
+    display_setTextColor(CONFIG_COLOR_TEXT); // Make the text black.
+  display_setTextSize(CONFIG_END_SCREEN_TEXT_SIZE);  
+  display_println(END_SCREEN_STATS);
+  display_setCursor(X_TEXT + 50, CONFIG_END_SCREEN_Y);
+  display_printDecimalInt(guessses);
+  display_setCursor(X_TEXT + 30, CONFIG_END_SCREEN_Y + 16);
+  display_printDecimalInt(timer);
+  
+  
 }
 
 void displayWords(uint32_t gameMode, char *first, char *second, char *third, bool erase)
@@ -135,19 +162,25 @@ void drawBody(int16_t incorrect, bool erase)
 }
 
 void printIntructions(bool erase) {
-  if (!erase) {
-    display_fillScreen(DISPLAY_BLACK);
-    display_setTextColor(DISPLAY_WHITE); // Make the text white.
-    display_setTextSize(2);
-    display_setCursor(DISPLAY_WIDTH / 8, (DISPLAY_HEIGHT / 3));
-    display_println(START_SCREEN);
-  }
-  if (erase) {
-    display_setTextColor(CONFIG_BACKGROUND_COLOR); // Make the text black.
-    display_setTextSize(2);
-    display_setCursor(DISPLAY_WIDTH / 8, (DISPLAY_HEIGHT / 3));
-    display_println(START_SCREEN);
-  }
+  display_setCursor(X_TEXT, Y_TEXT_0); // The middle of the boxes.
+    if(erase)
+      display_setTextColor(CONFIG_BACKGROUND_COLOR);
+    else
+      display_setTextColor(CONFIG_COLOR_TEXT); // Make the text black.
+    display_setTextSize(TEXT_SIZE);  
+    display_println(LINE_ONE);
+    if(erase)
+      display_setTextColor(CONFIG_BACKGROUND_COLOR);
+    else
+      display_setTextColor(CONFIG_COLOR_TEXT);
+    display_setCursor(X_TEXT, Y_TEXT_1 + 15);
+    display_println(LINE_TWO);
+    if(erase)
+      display_setTextColor(CONFIG_BACKGROUND_COLOR);
+    else
+      display_setTextColor(CONFIG_COLOR_TEXT);
+    display_setCursor(X_TEXT, Y_TEXT_2 + 30);
+    display_println(LINE_THREE);
 }
 
 #define IGNORE 26
@@ -179,4 +212,3 @@ hangmanDisplay_getLocationFromPoint(display_point_t point) {
 
   return location;
 }
-
