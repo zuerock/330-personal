@@ -47,6 +47,7 @@ void modifyKeyboard(bool correct);
 
 void words_init()
 {
+  display_fillScreen(CONFIG_BACKGROUND_COLOR);
   printIntructions(0);
   currentState = initSt;
 }
@@ -176,6 +177,7 @@ void words_tick()
         drawBody(i, true);
       currentState = initSt;
       endScreen(guesses,TIMER,true);
+      printIntructions(false);
       displayWords(gameMode, firstWordBlank, secondWordBlank, thirdWordBlank, true);
       displayWords(gameMode, firstWord, secondWord, thirdWord, true);
       hangmanDisplay_init();

@@ -9,7 +9,7 @@
 #include "touchscreen.h"
 #include "buttons.h"
 
-#define RUNTIME_S 60
+#define RUNTIME_S 20
 #define RUNTIME_TICKS ((int)(RUNTIME_S / CONFIG_GAME_TIMER_PERIOD))
 
 volatile bool interrupt_flag;
