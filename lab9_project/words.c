@@ -1,4 +1,3 @@
-
 #include "display.h"
 #include "config.h"
 #include "gameDisplay.h"
@@ -6,6 +5,8 @@
 #include "string.h"
 #include "touchscreen.h"
 #include "time.h"
+
+#define TIMER (timer_ticks * CONFIG_GAME_TIMER_PERIOD)
 
 typedef enum {
   initSt,
@@ -22,7 +23,7 @@ hangman_st_t currentState;
 uint32_t buttonVal;
 int16_t letterChoice[26];
 int16_t guesses;
-uint16_t timer;
+uint16_t timer_ticks;
 uint16_t wrongChoice;
 uint16_t rightChoice;
 bool letterExists;
@@ -55,7 +56,7 @@ void words_tick()
   switch (currentState)
   {
   case initSt:
-    timer = 0;
+    timer_ticks = 0;
     guesses = 0;
     wrongChoice = 0;
     rightChoice = 0;
@@ -80,6 +81,7 @@ void words_tick()
         hangmanDisplay_init();
         setWord();
         gameMode = 3;
+        timer_ticks = 0;
         displayWords(gameMode, firstWordBlank, secondWordBlank, thirdWordBlank, false);
         currentState = chooseSt;
         
@@ -90,6 +92,7 @@ void words_tick()
         hangmanDisplay_init();
         setWord();
         gameMode = 2;
+        timer_ticks = 0;
         displayWords(gameMode, firstWordBlank, secondWordBlank, thirdWordBlank, false);
         currentState = chooseSt;
     }
@@ -99,6 +102,7 @@ void words_tick()
         hangmanDisplay_init();
         setWord();
         gameMode = 1;
+        timer_ticks = 0;
         displayWords(gameMode, firstWordBlank, secondWordBlank, thirdWordBlank, false);
         currentState = chooseSt;
     }
@@ -127,7 +131,9 @@ void words_tick()
     {
       displayWords(gameMode, firstWordBlank, secondWordBlank, thirdWordBlank, true);
       displayWords(gameMode, firstWord, secondWord, thirdWord, false);
+      endScreen(guesses,TIMER,false);
       currentState = endSt;
+    
     }
     else
       currentState = chooseSt;
@@ -136,19 +142,28 @@ void words_tick()
     modifyKeyboard(true);
     if(gameMode == 3){
     if(rightChoice == (strlen(firstWord) +strlen(secondWord) +strlen(thirdWord)))
+      {
+      endScreen(guesses,TIMER,false);
       currentState = endSt;
+    }
     else 
       currentState = chooseSt;
   }
     if(gameMode == 2){
     if(rightChoice == (strlen(firstWord) +strlen(secondWord)))
+      {
+      endScreen(guesses,TIMER,false);
       currentState = endSt;
+    }
     else 
       currentState = chooseSt;
   }
     if(gameMode == 1){
     if(rightChoice == (strlen(firstWord)))
+    {
+      endScreen(guesses,TIMER,false);
       currentState = endSt;
+    }
     else 
       currentState = chooseSt;
   }
@@ -160,6 +175,7 @@ void words_tick()
       for(int16_t i = 0; i <= wrongChoice; i++)
         drawBody(i, true);
       currentState = initSt;
+      endScreen(guesses,TIMER,true);
       displayWords(gameMode, firstWordBlank, secondWordBlank, thirdWordBlank, true);
       displayWords(gameMode, firstWord, secondWord, thirdWord, true);
       hangmanDisplay_init();
@@ -173,10 +189,10 @@ void words_tick()
   switch (currentState)
   {
     case gameModeSt:
-    timer++;
+    timer_ticks++;
     break;
   case chooseSt:
-    timer++;
+    timer_ticks++;
     notUsed = true;
     letterExists = false;
     break;
@@ -194,7 +210,7 @@ void words_tick()
 
 void setWord()
 {
-  srand(timer);
+  srand(timer_ticks);
   int16_t random = rand() % 11;
   char wordfirst[][11] = {"ARMCHAIRS", "AUNTS", "BALLS", "BERMUDAS","BEANS","BALLOONS","BEARS","BLOUSES","BEDS","BABIES","PSST"};
   char wordsecond[][10] = {"AFFORD","AGREE","AIM","APPEAR","ATTEMPT","ASK","ARRANGE","BEG","BEGIN","CARE"};
